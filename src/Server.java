@@ -8,7 +8,43 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
+//I created a person class to hold useful information on the person currently logged in
+class Person
+{
+private boolean loggedIN;
+private String userID;
+private String userPassword;
+public Person(boolean loggedIN, String userID, String userPassword)
+{
+    this.loggedIN = loggedIN;
+    this.userID = userID;
+    this.userPassword = userPassword;
+}
+public Person()
+{
+    this(false, null, null);
+}//end no-arg constructor
+    public boolean getLoggedIN() {
+        return loggedIN;
+    }
+    public void setLoggedIN(boolean loggedIN) {
+        this.loggedIN = loggedIN;
+    }
+    public String getUserID() {
+        return userID;
+    }
+    public void setUserID(String userID) {
+        this.userID = userID;
+    }
+    public String getUserPassword() {
+        return userPassword;
+    }
+    public void setUserPassword(String userPassword) {
+        this.userPassword = userPassword;
+    }
+}
 
+//Server class
 public class Server {
 
     private static final int SERVER_PORT = 3541;
@@ -16,6 +52,14 @@ public class Server {
     public static void main(String[] args) {
         createCommunicationLoop();
     }//end main
+
+    //Method for calculating circle area and circumference
+    public static String circle(int radius)
+    {
+    double area = Math.PI * radius * radius;
+    double circumference = 2 * Math.PI * radius;
+    return "Circle's circumference is " + String.format("%.2f",circumference) + " and area is " + String.format("%.2f",area);
+    }
 
     public static void createCommunicationLoop() {
         try {
@@ -39,35 +83,41 @@ public class Server {
 
             //server loop listening for the client
             //and responding
+            Person person = new Person();
             while(true) {
+                //Input from the client in strReceived
                 String strReceived = inputFromClient.readUTF();
+                //Input from the client put into an array with delimiter " " (space)
                 String[] arrayOfStrReceived = strReceived.split(" ");
 
-
-                outputToClient.writeUTF("Failure: Please provide both a username and a password. Try again.");
-
+                //Checks if the command is login
                 if(arrayOfStrReceived[0].equalsIgnoreCase("login"))
                 {
-                    //Opening the logins.txt file and creating two strings to identify the current user
-                    //NOTE MAKE TRY CATCH FOR OUT OF BOUNDS
-                    String userID = arrayOfStrReceived[1];
-                    String userPassword = arrayOfStrReceived[2];
+                    //Checks if a username or a password is missing, or if the array is too large (so no array out of bounds exception is received)
+                    if(arrayOfStrReceived.length != 3)
+                    {
+                        outputToClient.writeUTF("301 message format error");
+                        continue;
+                    }
+                    //If both password and username were provided, we open the logins.txt file and create two strings to identify the current user
+                    person.setUserID(arrayOfStrReceived[1]);
+                    person.setUserPassword(arrayOfStrReceived[2]);
                     Scanner infile = null;
                     String input;
-                    boolean loginSuccessful = false;
                     try {
                         File f = new File("logins.txt");
                         infile = new Scanner(f);
                         while(infile.hasNext()) {
                             input = infile.nextLine();
                             String[] arrayOfFile = input.split(" ");
-                            if((userID.compareTo(arrayOfFile[0]) == 0) && (userPassword.compareTo(arrayOfFile[1]) == 0))
+                            //Traversing over the file to check if a correct username and password was provided
+                            if(person.getUserID().equalsIgnoreCase(arrayOfFile[0]) && person.getUserPassword().equalsIgnoreCase(arrayOfFile[1]))
                             {
                                 outputToClient.writeUTF("success");
-                                loginSuccessful = true;
+                                person.setLoggedIN(true);
                             }
                         }
-                        if(loginSuccessful == false)
+                        if(!person.getLoggedIN())
                         {
                             outputToClient.writeUTF("Failure: Please provide correct username and password. Try again.");
                         }
@@ -81,6 +131,51 @@ public class Server {
                         }
                     }
                 }
+
+                //Checks if the command is solve
+                else if(arrayOfStrReceived[0].equalsIgnoreCase("solve") && person.getLoggedIN())
+                {
+                    //If string is not length 3 or length 4
+                    if(arrayOfStrReceived.length !=3 && arrayOfStrReceived.length !=4)
+                    {
+                        if(arrayOfStrReceived.length == 2 && arrayOfStrReceived[1].equalsIgnoreCase("-c"))
+                        {
+                            outputToClient.writeUTF("Error : No radius found");
+                            continue;
+                        }
+                        if(arrayOfStrReceived.length == 2 && arrayOfStrReceived[1].equalsIgnoreCase("-r"))
+                        {
+                            outputToClient.writeUTF("Error : No sides found");
+                            continue;
+                        }
+                        else
+                        {
+                            outputToClient.writeUTF("301 message format error");
+                        }
+                        continue;
+                    }
+                    //If the string is a circle with more than one parameter
+                    if(arrayOfStrReceived.length == 4 && arrayOfStrReceived[1].equalsIgnoreCase("-c"))
+                    {
+                        outputToClient.writeUTF("301 message format error, you must only put a radius for the circle");
+                        continue;
+                    }
+
+                    //Done checking possible errors/formatting issues
+                    //Checks if we need to solve a circle
+                    if(arrayOfStrReceived[1].equalsIgnoreCase("-c"))
+                    {
+                        outputToClient.writeUTF(circle(Integer.parseInt(arrayOfStrReceived[2])));
+                    }
+                    //outputToClient.writeUTF("You are in solve");
+                }
+
+                //When there is an invalid command (no if statements are called)
+                else
+                {
+                    outputToClient.writeUTF("300 invalid command");
+                }
+                //FOR LOGGING OUT USER LATER
                 /* else if(strReceived.equalsIgnoreCase("quit")) {
                     System.out.println("Shutting down server...");
                     outputToClient.writeUTF("Shutting down server...");
