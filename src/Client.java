@@ -38,10 +38,9 @@ public class Client {
                 //message that will be sent to the server from the command line:
                 message = input.nextLine();
                 toServer.writeUTF(message);
-                if(message.equalsIgnoreCase("quit")) {
+                if(message.equalsIgnoreCase("shutdown")) {
                     break;
                 }
-
                 //received message from the server:
                 message = fromServer.readUTF();
                 System.out.println("S: " + message);

@@ -1,11 +1,7 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 //I created a person class to hold useful information on the person currently logged in
@@ -61,6 +57,22 @@ public class Server {
     return "Circle's circumference is " + String.format("%.2f",circumference) + " and area is " + String.format("%.2f",area);
     }
 
+    //Method for calculating square perimeter and area
+    public static String square(int side)
+    {
+        double area = Math.pow(side, 2);
+        double perimeter = 4 * side;
+        return "Rectangle's perimeter is " + String.format("%.2f",perimeter) + " and area is " + String.format("%.2f",area);
+    }
+
+    //Method for calculating rectangle perimeter and area
+    public static String rectangle(int length, int width)
+    {
+        double area = length * width;
+        double perimeter = 2 * (length + width);
+        return "Rectangle's perimeter is " + String.format("%.2f",perimeter) + " and area is " + String.format("%.2f",area);
+    }
+
     public static void createCommunicationLoop() {
         try {
             //create server socket
@@ -99,9 +111,12 @@ public class Server {
                         outputToClient.writeUTF("301 message format error");
                         continue;
                     }
-                    //If both password and username were provided, we open the logins.txt file and create two strings to identify the current user
-                    person.setUserID(arrayOfStrReceived[1]);
-                    person.setUserPassword(arrayOfStrReceived[2]);
+                    //If a different user tries to login, we tell the user they need to logout first
+                    if((person.getUserID() != null && (!person.getUserID().equalsIgnoreCase(arrayOfStrReceived[1])) || (person.getUserPassword() != null && (!person.getUserPassword().equalsIgnoreCase(arrayOfStrReceived[2])))))
+                    {
+                        outputToClient.writeUTF("Failure, you need to logout before trying to sign in with a different user");
+                        continue;
+                    }
                     Scanner infile = null;
                     String input;
                     try {
@@ -111,8 +126,11 @@ public class Server {
                             input = infile.nextLine();
                             String[] arrayOfFile = input.split(" ");
                             //Traversing over the file to check if a correct username and password was provided
-                            if(person.getUserID().equalsIgnoreCase(arrayOfFile[0]) && person.getUserPassword().equalsIgnoreCase(arrayOfFile[1]))
+                            if(arrayOfStrReceived[1].equalsIgnoreCase(arrayOfFile[0]) && arrayOfStrReceived[2].equalsIgnoreCase(arrayOfFile[1]))
                             {
+                                //
+                                person.setUserID(arrayOfStrReceived[1]);
+                                person.setUserPassword(arrayOfStrReceived[2]);
                                 outputToClient.writeUTF("success");
                                 person.setLoggedIN(true);
                             }
@@ -135,17 +153,32 @@ public class Server {
                 //Checks if the command is solve
                 else if(arrayOfStrReceived[0].equalsIgnoreCase("solve") && person.getLoggedIN())
                 {
-                    //If string is not length 3 or length 4
-                    if(arrayOfStrReceived.length !=3 && arrayOfStrReceived.length !=4)
+                    PrintWriter pw = null;
+                    try
                     {
-                        if(arrayOfStrReceived.length == 2 && arrayOfStrReceived[1].equalsIgnoreCase("-c"))
+                        //Checks if the file already exists or not
+                        boolean fileExists = new File(person.getUserID() + "_solutions.txt").exists();
+                        //If the file doesn't exist we make a new one
+                        if (!fileExists)
+                        {
+                            File file = new File(person.getUserID() + "_solutions.txt");
+                        }
+                        FileWriter filewriter = new FileWriter(person.getUserID() + "_solutions.txt", true);
+                        pw = new PrintWriter(filewriter);
+
+                    //If string is not length 3 or length 4
+                    if (arrayOfStrReceived.length != 3 && arrayOfStrReceived.length != 4)
+                    {
+                        if (arrayOfStrReceived.length == 2 && arrayOfStrReceived[1].equalsIgnoreCase("-c"))
                         {
                             outputToClient.writeUTF("Error : No radius found");
+                            pw.println("Error : No radius found");
                             continue;
                         }
-                        if(arrayOfStrReceived.length == 2 && arrayOfStrReceived[1].equalsIgnoreCase("-r"))
+                        if (arrayOfStrReceived.length == 2 && arrayOfStrReceived[1].equalsIgnoreCase("-r"))
                         {
                             outputToClient.writeUTF("Error : No sides found");
+                            pw.println("Error : No sides found");
                             continue;
                         }
                         else
@@ -155,7 +188,7 @@ public class Server {
                         continue;
                     }
                     //If the string is a circle with more than one parameter
-                    if(arrayOfStrReceived.length == 4 && arrayOfStrReceived[1].equalsIgnoreCase("-c"))
+                    if (arrayOfStrReceived.length == 4 && arrayOfStrReceived[1].equalsIgnoreCase("-c"))
                     {
                         outputToClient.writeUTF("301 message format error, you must only put a radius for the circle");
                         continue;
@@ -163,17 +196,126 @@ public class Server {
 
                     //Done checking possible errors/formatting issues
                     //Checks if we need to solve a circle
-                    if(arrayOfStrReceived[1].equalsIgnoreCase("-c"))
+                    if (arrayOfStrReceived[1].equalsIgnoreCase("-c"))
                     {
                         outputToClient.writeUTF(circle(Integer.parseInt(arrayOfStrReceived[2])));
+                        pw.println("Radius " + arrayOfStrReceived[2] + ": " + circle(Integer.parseInt(arrayOfStrReceived[2])));
                     }
-                    //outputToClient.writeUTF("You are in solve");
+                    //Checks if we need to solve a rectangle (square)
+                    if (arrayOfStrReceived[1].equalsIgnoreCase("-r") && arrayOfStrReceived.length == 3)
+                    {
+                        outputToClient.writeUTF(square(Integer.parseInt(arrayOfStrReceived[2])));
+                        pw.println("side " + arrayOfStrReceived[2] + ": " + square(Integer.parseInt(arrayOfStrReceived[2])));
+                    }
+                    //Checks if we need to solve a rectangle
+                    if (arrayOfStrReceived[1].equalsIgnoreCase("-r") && arrayOfStrReceived.length == 4)
+                    {
+                        outputToClient.writeUTF(rectangle(Integer.parseInt(arrayOfStrReceived[2]), Integer.parseInt(arrayOfStrReceived[3])));
+                        pw.println("sides " + arrayOfStrReceived[2] + " " + arrayOfStrReceived[3] + " : " + rectangle(Integer.parseInt(arrayOfStrReceived[2]), Integer.parseInt(arrayOfStrReceived[3])));
+                    }
+                    }
+
+                     catch(FileNotFoundException ex)
+                     {
+                    System.out.println("Oops, can't open the file.");
+                    }
+                    finally {
+                    if(pw != null) {
+                        pw.close();
+                    }
+                }
+                }
+
+                //Checks if the command is list and a proper user is logged in
+                else if(arrayOfStrReceived[0].equalsIgnoreCase("list") && person.getLoggedIN())
+                {
+                    Scanner infile = null;
+                    String input = "";
+                    try
+                    {
+                        //If the user only wants their own list
+                        if (arrayOfStrReceived.length == 1)
+                        {
+                            boolean fileExists = new File(person.getUserID() + "_solutions.txt").exists();
+                            input += System.lineSeparator() + person.getUserID() + System.lineSeparator();
+                            if(!fileExists)
+                            {
+                                input += "No interactions yet" + System.lineSeparator();
+                            }
+                            if(fileExists)
+                            {
+                                File f = new File(person.getUserID() + "_solutions.txt");
+                                infile = new Scanner(f);
+                                input = person.getUserID() + System.lineSeparator();
+                                while (infile.hasNext())
+                                {
+                                    input += infile.nextLine() + System.lineSeparator();
+                                }
+                            }
+                            outputToClient.writeUTF(input);
+                        }
+
+                        //If the user is the root and wants the list for all users
+                        else if(arrayOfStrReceived.length == 2 && arrayOfStrReceived[1].equalsIgnoreCase("-all") && person.getUserID().equalsIgnoreCase("root"))
+                        {
+                            String[] usernameArray = new String[] {"root", "john", "sally", "qiang"};
+                            for(int i = 0; i < 4; i++)
+                            {
+                                //Checks if the file already exists or not
+                                boolean fileExists = new File(usernameArray[i] + "_solutions.txt").exists();
+                                input += usernameArray[i] + System.lineSeparator();
+                                if(!fileExists)
+                                {
+                                    input += "No interactions yet" + System.lineSeparator();
+                                    continue;
+                                }
+                                File f = new File(usernameArray[i] + "_solutions.txt");
+                                infile = new Scanner(f);
+                                while (infile.hasNext())
+                                {
+                                    input += infile.nextLine() + System.lineSeparator();
+                                }
+                            }
+                            outputToClient.writeUTF(input);
+                        }
+                        else if(arrayOfStrReceived.length == 2 && arrayOfStrReceived[1].equalsIgnoreCase("-all") && !person.getUserID().equalsIgnoreCase("root"))
+                        {
+                            outputToClient.writeUTF("Error: you are not the root user");
+                        }
+                        else
+                        {
+                            outputToClient.writeUTF("301 message format error");
+                        }
+
+                    }
+                    catch(FileNotFoundException ex){
+                        System.out.println("Ooops can't find the file.");
+                    }
+                    finally{
+                        if (infile != null)
+                        {
+                            infile.close();
+                        }
+                    }
+                }
+
+                //Checks if the command is shutdown
+                else if(arrayOfStrReceived[0].equalsIgnoreCase("shutdown") && person.getLoggedIN())
+                {
+                    if(arrayOfStrReceived.length != 1)
+                    {
+                        outputToClient.writeUTF("301 message format error");
+                    }
                 }
 
                 //When there is an invalid command (no if statements are called)
-                else
+                else if(person.getLoggedIN())
                 {
                     outputToClient.writeUTF("300 invalid command");
+                }
+                else if(!(person.getLoggedIN()))
+                {
+                    outputToClient.writeUTF("300 invalid command because you are not logged in or not a valid user");
                 }
                 //FOR LOGGING OUT USER LATER
                 /* else if(strReceived.equalsIgnoreCase("quit")) {

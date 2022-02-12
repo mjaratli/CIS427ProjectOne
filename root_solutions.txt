@@ -1,0 +1,3 @@
+Error : No sides found
+sides 2 6 : Rectangle's perimeter is 16.00 and area is 12.00
+Error : No radius found
