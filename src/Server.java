@@ -299,13 +299,32 @@ public class Server {
                     }
                 }
 
-                //Checks if the command is shutdown
-                else if(arrayOfStrReceived[0].equalsIgnoreCase("shutdown") && person.getLoggedIN())
+                //Checks if the command is logout
+                else if(arrayOfStrReceived[0].equalsIgnoreCase("logout") && person.getLoggedIN())
                 {
                     if(arrayOfStrReceived.length != 1)
                     {
                         outputToClient.writeUTF("301 message format error");
+                        break;
                     }
+                    outputToClient.writeUTF("200 OK");
+                    person.setUserID(null);
+                    person.setUserPassword(null);
+                    person.setLoggedIN(false);
+                }
+
+                //Checks if the command is shutdown
+                else if(arrayOfStrReceived[0].equalsIgnoreCase("shutdown"))
+                {
+                    if(arrayOfStrReceived.length != 1)
+                    {
+                        outputToClient.writeUTF("301 message format error");
+                        break;
+                    }
+                    outputToClient.writeUTF("200 OK");
+                    serverSocket.close();
+                    socket.close();
+                    break;
                 }
 
                 //When there is an invalid command (no if statements are called)
@@ -317,21 +336,7 @@ public class Server {
                 {
                     outputToClient.writeUTF("300 invalid command because you are not logged in or not a valid user");
                 }
-                //FOR LOGGING OUT USER LATER
-                /* else if(strReceived.equalsIgnoreCase("quit")) {
-                    System.out.println("Shutting down server...");
-                    outputToClient.writeUTF("Shutting down server...");
-                    serverSocket.close();
-                    socket.close();
-                    break;  //get out of loop
-                }
-                else {
-                    System.out.println("Unknown command received: "
-                            + strReceived);
-                    outputToClient.writeUTF("Unknown command.  "
-                            + "Please try again.");
 
-                }*/
             }//end server loop
         }
         catch(IOException ex) {

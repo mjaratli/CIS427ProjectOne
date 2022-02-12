@@ -15,8 +15,7 @@ public class Client {
 
         DataOutputStream toServer;
         DataInputStream fromServer;
-        Scanner input =
-                new Scanner(System.in);
+        Scanner input = new Scanner(System.in);
         String message;
 
         //attempt to connect to the server
@@ -38,7 +37,10 @@ public class Client {
                 //message that will be sent to the server from the command line:
                 message = input.nextLine();
                 toServer.writeUTF(message);
-                if(message.equalsIgnoreCase("shutdown")) {
+                if(message.equalsIgnoreCase("shutdown"))
+                {
+                    message = fromServer.readUTF();
+                    System.out.println("S: " + message);
                     break;
                 }
                 //received message from the server:
