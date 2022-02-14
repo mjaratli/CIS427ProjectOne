@@ -1,7 +1,7 @@
 # CIS427 Project One
 https://github.com/mjaratli/CIS427ProjectOne
 
-###How to build and run the program
+### How to build and run the program
 First, open the project in an IDE. I used IntelliJ IDEA Edu.
 To run the program, first build the 
 server class and then build the client class.
@@ -10,7 +10,7 @@ a connection, not the client. After doing that, you
 can start using the commands : login, solve, 
 list, logout, and shutdown.
 
-###The five commands
+### The five commands
 1. Login
 - Allows the user to login
 - The user must log in with a proper password to use 
@@ -29,12 +29,12 @@ previous solve command calls
 5. Shutdown
 - Shutdown terminates the programs and closes all sockets
 
-##Problems or bugs
+## Problems or bugs
 There are no known problems or bugs in the program.
 
-##Sample output
+## Sample output
 
-###Run #1
+### Run #1
 - C: login
 - S: 301 message format error
 - C: login jake jake22
@@ -104,7 +104,7 @@ There are no known problems or bugs in the program.
 
 - Process finished with exit code 0
 
-###Run #2
+### Run #2
 - C: solve
 - S: 300 invalid command because you are not logged in or not a valid user
 - C: logout
