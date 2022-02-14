@@ -4,22 +4,25 @@ import java.net.Socket;
 import java.util.Date;
 import java.util.Scanner;
 
-//I created a person class to hold useful information on the person currently logged in
+//I created a person class to hold useful information about the user that is currently logged in
 class Person
 {
 private boolean loggedIN;
 private String userID;
 private String userPassword;
+//argument constructor
 public Person(boolean loggedIN, String userID, String userPassword)
 {
     this.loggedIN = loggedIN;
     this.userID = userID;
     this.userPassword = userPassword;
 }
+//no-argument constructor
 public Person()
 {
     this(false, null, null);
-}//end no-arg constructor
+}
+//Accessor and mutator methods
     public boolean getLoggedIN() {
         return loggedIN;
     }
@@ -49,7 +52,12 @@ public class Server {
         createCommunicationLoop();
     }//end main
 
-    //Method for calculating circle area and circumference
+    /**
+     * Calculates a circle's area and circumference to two decimal places
+     * after the user has sent the command solve -c (any #)
+     * @param radius The radius of the circle
+     * @return Returns a string with the circumference and area to the client
+     */
     public static String circle(int radius)
     {
     double area = Math.PI * radius * radius;
@@ -57,7 +65,12 @@ public class Server {
     return "Circle's circumference is " + String.format("%.2f",circumference) + " and area is " + String.format("%.2f",area);
     }
 
-    //Method for calculating square perimeter and area
+    /**
+     * Calculates a square's (equal sided rectangle) area and perimeter to two decimal places
+     * after the user has sent the command solve -r (any #)
+     * @param side The length of the sides of the square
+     * @return Returns a string with the area and perimeter of the square to the client
+     */
     public static String square(int side)
     {
         double area = Math.pow(side, 2);
@@ -65,7 +78,13 @@ public class Server {
         return "Rectangle's perimeter is " + String.format("%.2f",perimeter) + " and area is " + String.format("%.2f",area);
     }
 
-    //Method for calculating rectangle perimeter and area
+    /**
+     * Calculates a rectangle's area and perimeter to two decimal places
+     * after the user has sent the command solve -r (any #) (any #)
+     * @param length The length of two sides of the rectangle
+     * @param width The width (length of the other two sides of the rectangle)
+     * @return Returns a string with the area and perimeter of the rectangle to the client
+     */
     public static String rectangle(int length, int width)
     {
         double area = length * width;
@@ -73,6 +92,10 @@ public class Server {
         return "Rectangle's perimeter is " + String.format("%.2f",perimeter) + " and area is " + String.format("%.2f",area);
     }
 
+    /**
+     * Creates communication between the server and client.
+     * Handles the commands : login, solve, list, shutdown, and logout.
+     */
     public static void createCommunicationLoop() {
         try {
             //create server socket
@@ -99,6 +122,7 @@ public class Server {
             while(true) {
                 //Input from the client in strReceived
                 String strReceived = inputFromClient.readUTF();
+                System.out.println(strReceived);
                 //Input from the client put into an array with delimiter " " (space)
                 String[] arrayOfStrReceived = strReceived.split(" ");
 
@@ -128,7 +152,6 @@ public class Server {
                             //Traversing over the file to check if a correct username and password was provided
                             if(arrayOfStrReceived[1].equalsIgnoreCase(arrayOfFile[0]) && arrayOfStrReceived[2].equalsIgnoreCase(arrayOfFile[1]))
                             {
-                                //
                                 person.setUserID(arrayOfStrReceived[1]);
                                 person.setUserPassword(arrayOfStrReceived[2]);
                                 outputToClient.writeUTF("success");
@@ -150,7 +173,7 @@ public class Server {
                     }
                 }
 
-                //Checks if the command is solve
+                //Checks if the command is solve and a proper user is logged in
                 else if(arrayOfStrReceived[0].equalsIgnoreCase("solve") && person.getLoggedIN())
                 {
                     PrintWriter pw = null;
@@ -187,6 +210,7 @@ public class Server {
                         }
                         continue;
                     }
+
                     //If the string is a circle with more than one parameter
                     if (arrayOfStrReceived.length == 4 && arrayOfStrReceived[1].equalsIgnoreCase("-c"))
                     {
@@ -194,29 +218,40 @@ public class Server {
                         continue;
                     }
 
-                    //Done checking possible errors/formatting issues
-                    //Checks if we need to solve a circle
-                    if (arrayOfStrReceived[1].equalsIgnoreCase("-c"))
-                    {
-                        outputToClient.writeUTF(circle(Integer.parseInt(arrayOfStrReceived[2])));
-                        pw.println("Radius " + arrayOfStrReceived[2] + ": " + circle(Integer.parseInt(arrayOfStrReceived[2])));
-                    }
-                    //Checks if we need to solve a rectangle (square)
-                    if (arrayOfStrReceived[1].equalsIgnoreCase("-r") && arrayOfStrReceived.length == 3)
-                    {
-                        outputToClient.writeUTF(square(Integer.parseInt(arrayOfStrReceived[2])));
-                        pw.println("side " + arrayOfStrReceived[2] + ": " + square(Integer.parseInt(arrayOfStrReceived[2])));
-                    }
-                    //Checks if we need to solve a rectangle
-                    if (arrayOfStrReceived[1].equalsIgnoreCase("-r") && arrayOfStrReceived.length == 4)
-                    {
-                        outputToClient.writeUTF(rectangle(Integer.parseInt(arrayOfStrReceived[2]), Integer.parseInt(arrayOfStrReceived[3])));
-                        pw.println("sides " + arrayOfStrReceived[2] + " " + arrayOfStrReceived[3] + " : " + rectangle(Integer.parseInt(arrayOfStrReceived[2]), Integer.parseInt(arrayOfStrReceived[3])));
-                    }
+                    //Done checking the possible errors/formatting issues
+                        try
+                        {
+                            //Checks if we need to solve a circle
+                            if (arrayOfStrReceived[1].equalsIgnoreCase("-c"))
+                            {
+                                outputToClient.writeUTF(circle(Integer.parseInt(arrayOfStrReceived[2])));
+                                pw.println("Radius " + arrayOfStrReceived[2] + ": " + circle(Integer.parseInt(arrayOfStrReceived[2])));
+                            }
+                            //Checks if we need to solve a rectangle (square)
+                            else if (arrayOfStrReceived[1].equalsIgnoreCase("-r") && arrayOfStrReceived.length == 3)
+                            {
+                                outputToClient.writeUTF(square(Integer.parseInt(arrayOfStrReceived[2])));
+                                pw.println("side " + arrayOfStrReceived[2] + ": " + square(Integer.parseInt(arrayOfStrReceived[2])));
+                            }
+                            //Checks if we need to solve a rectangle
+                            else if (arrayOfStrReceived[1].equalsIgnoreCase("-r") && arrayOfStrReceived.length == 4)
+                            {
+                                outputToClient.writeUTF(rectangle(Integer.parseInt(arrayOfStrReceived[2]), Integer.parseInt(arrayOfStrReceived[3])));
+                                pw.println("sides " + arrayOfStrReceived[2] + " " + arrayOfStrReceived[3] + " : " + rectangle(Integer.parseInt(arrayOfStrReceived[2]), Integer.parseInt(arrayOfStrReceived[3])));
+                            }
+                            else
+                            {
+                                outputToClient.writeUTF("301 message format error");
+                            }
+                        }
+                        catch (NumberFormatException ex)
+                        {
+                            outputToClient.writeUTF("301 message format error, only input numbers");
+                        }
                     }
 
-                     catch(FileNotFoundException ex)
-                     {
+                    catch(FileNotFoundException ex)
+                    {
                     System.out.println("Oops, can't open the file.");
                     }
                     finally {
@@ -299,7 +334,7 @@ public class Server {
                     }
                 }
 
-                //Checks if the command is logout
+                //Checks if the command is logout and a proper user is logged in
                 else if(arrayOfStrReceived[0].equalsIgnoreCase("logout") && person.getLoggedIN())
                 {
                     if(arrayOfStrReceived.length != 1)
@@ -313,13 +348,13 @@ public class Server {
                     person.setLoggedIN(false);
                 }
 
-                //Checks if the command is shutdown
+                //Checks if the command is shutdown, you can shut down even if you are not logged in
                 else if(arrayOfStrReceived[0].equalsIgnoreCase("shutdown"))
                 {
                     if(arrayOfStrReceived.length != 1)
                     {
                         outputToClient.writeUTF("301 message format error");
-                        break;
+                        continue;
                     }
                     outputToClient.writeUTF("200 OK");
                     serverSocket.close();

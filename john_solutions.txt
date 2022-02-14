@@ -1,4 +1,5 @@
-Error : No sides found
 Error : No radius found
-sides 2 6 : Rectangle's perimeter is 16.00 and area is 12.00
+Error : No sides found
 Radius 4: Circle's circumference is 25.13 and area is 50.27
+side 2: Rectangle's perimeter is 8.00 and area is 4.00
+sides 2 6 : Rectangle's perimeter is 16.00 and area is 12.00
